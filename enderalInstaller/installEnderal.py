@@ -8,10 +8,16 @@ import getpass
 import os
 import pathlib
 import platform
+import subprocess
 import shutil
 import sys
 import urllib.request
 import zipfile
+
+try:
+	import ctypes
+except:
+	pass
 
 # Procedures
 def _wget_reporthook(numblocks, blocksize, filesize, name):
@@ -571,6 +577,17 @@ class Installer:
 		self.PATCH_URL = "getlist.php?laun=enderal1.0.0.0&lang="
 
 		self.iniGen = IniGenerator()
+
+		# Detect screen resolution
+		if self.LINUX == True:
+			output = subprocess.Popen("xrandr | grep \"\*\" | cut -d\" \" -f4",
+				shell=True, stdout=subprocess.PIPE).communicate()[0]
+			output = output.split(b"\n")[0].split(b"x")
+			self.iniGen.RES_X = int(output[0])
+			self.iniGen.RES_Y = int(output[1])
+		else:
+			self.iniGen.RES_X = ctypes.windll.user32.GetSystemMetrics(0)
+			self.iniGen.RES_Y = ctypes.windll.user32.GetSystemMetrics(1)
 
 	def generateConfig(self):
 		self.iniGen.LANGUAGE = self.LANGUAGE

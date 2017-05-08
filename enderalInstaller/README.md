@@ -20,11 +20,11 @@ This Python 3 script provides an alternative installation method for the Skyrim 
 
 The most common command line on Linux would be:
 ```
-WINEPREFIX=~/.wine/YOUR_WINE_PREFIX_HERE ./installEnderal.py --wine --config --install --language YOUR_LANGUAGE --resx YOUR_SCREEN_WIDTH --resy YOUR_SCREEN_HEIGHT
+WINEPREFIX=~/.wine/YOUR_WINE_PREFIX_HERE ./installEnderal.py --wine --config --install --language YOUR_LANGUAGE
 ```
 or on Windows:
 ```
-installEnderal.py --config --install --language YOUR_LANGUAGE --resx YOUR_SCREEN_WIDTH --resy YOUR_SCREEN_HEIGHT
+installEnderal.py --config --install --language YOUR_LANGUAGE
 ```
 
 This script cannot update an existing installation yet. To do so, a clean reinstallation from the created backup directory is required.
