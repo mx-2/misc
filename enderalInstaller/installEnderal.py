@@ -661,7 +661,8 @@ class Installer:
 		for x in patches:
 			path = pathlib.Path(self.CACHEDIR + '/' + x)
 			if not path.is_file():
-				wget(self.ROOT_URL + '/' + self.LANGUAGE.lower() + '/' + x, x)
+				wget(self.ROOT_URL + '/' + self.LANGUAGE.lower() + '/' + x,
+					self.CACHEDIR + '/' + x)
 			unzip(self.CACHEDIR + '/' + x, self.DSTDIR, self.LINUX)
 
 		# Copy required Skyrim files
