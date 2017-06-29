@@ -566,6 +566,7 @@ class Installer:
 		self.LINUX = True if platform.system() == "Linux" else False
 
 		self.INSTALL = False
+		self.DOWNLOAD = False
 		self.CONFIGURE = False
 		self.USE_WINEPREFIX = False
 		self.GET_LSTFILE = False
@@ -577,6 +578,7 @@ class Installer:
 		self.PATCH_URL = "getlist.php?laun=enderal1.0.0.0&lang="
 
 		self.iniGen = IniGenerator()
+		self.patches= []
 
 		# Detect screen resolution
 		if self.LINUX == True:
@@ -623,10 +625,7 @@ class Installer:
 		plugins_txt.write("skyrim.esm\nupdate.esm\n")
 		plugins_txt.close()
 
-	def install(self):
-		# Prepare directories
-		shutil.move(self.DSTDIR, self.BAKDIR)
-		os.makedirs(self.DSTDIR, exist_ok=True)
+	def download(self):
 		os.makedirs(self.CACHEDIR, exist_ok=True)
 
 		# Get patchlist if required
@@ -640,12 +639,26 @@ class Installer:
 			wget(self.ROOT_URL + '/' + self.PATCH_URL + self.LANGUAGE.lower(),
 				self.CACHEDIR + '/' + self.LSTFILE + self.LANGUAGE.lower() + ".lst")
 
-		# Read patchlist and get version
+		# Read patchlist
 		listfile = open(self.CACHEDIR + '/' + \
 			self.LSTFILE + self.LANGUAGE.lower() + ".lst", 'r')
-		patches = listfile.read().split()
+		self.patches = listfile.read().split()
 		listfile.close()
-		version = patches[-1][patches[-1].find('[')+1:patches[-1].find(']')]
+
+		# Get patches if required
+		for x in self.patches:
+			path = pathlib.Path(self.CACHEDIR + '/' + x)
+			if not path.is_file():
+				wget(self.ROOT_URL + '/' + self.LANGUAGE.lower() + '/' + x,
+					self.CACHEDIR + '/' + x)
+
+	def install(self):
+		# Prepare directories
+		shutil.move(self.DSTDIR, self.BAKDIR)
+		os.makedirs(self.DSTDIR, exist_ok=True)		
+
+		# Extract version from patchlist
+		version = self.patches[-1][self.patches[-1].find('[')+1:self.patches[-1].find(']')]
 	
 		# Check if main package exists
 		mainpkg = pathlib.Path(self.CACHEDIR + '/' + self.MAINPKG)
@@ -657,12 +670,12 @@ class Installer:
 		# Unzip main package
 		unzip(self.CACHEDIR + '/' + self.MAINPKG, self.DSTDIR, self.LINUX)
 
-		# Get patches if required and unzip them
-		for x in patches:
+		# Unzip patches
+		for x in self.patches:
 			path = pathlib.Path(self.CACHEDIR + '/' + x)
 			if not path.is_file():
-				wget(self.ROOT_URL + '/' + self.LANGUAGE.lower() + '/' + x,
-					self.CACHEDIR + '/' + x)
+				print("Patch file not found. Abort!")
+				sys.exit(3)
 			unzip(self.CACHEDIR + '/' + x, self.DSTDIR, self.LINUX)
 
 		# Copy required Skyrim files
@@ -720,9 +733,12 @@ class Installer:
 		conffile.close()
 
 	def run(self):
-		if self.INSTALL == False and self.CONFIGURE == False:
+		if self.DOWNLOAD == False and self.CONFIGURE == False \
+			and self.INSTALL == False:
 			return 1
 
+		if self.DOWNLOAD == True:
+			self.download()
 		if self.INSTALL == True:
 			self.install()
 		if self.CONFIGURE == True:
@@ -741,6 +757,7 @@ def main():
 	parser.add_argument("--cachedir", help="Path to cache directory which contains downloaded files")
 	parser.add_argument("--update", help="Force redownload of patch list", action="store_true")
 	parser.add_argument("--install", help="Install Enderal", action="store_true")
+	parser.add_argument("--download", help="Download Enderal files without installing", action="store_true")
 	parser.add_argument("--config", help="Generate config files", action="store_true")
 	parser.add_argument("--language", help="Language to install (EN is default)",
 		choices=["DE", "EN"])
@@ -759,6 +776,8 @@ def main():
 
 	if args["install"] == True:
 		app.INSTALL = True
+	if args["download"] == True:
+		app.DOWNLOAD = True
 	if args["config"] == True:
 		app.CONFIGURE = True
 	if args["update"] == True:
